@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบจองที่นั่งรถบัส</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    .seat {
+      width: 80px;
+      height: 60px;
+      margin: 5px;
+      border: none;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+    }
+    .available { background-color: green; }
+    .booked { background-color: red; }
+    #seats { display: flex; flex-wrap: wrap; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<h1>🚍 ระบบจองที่นั่งรถบัส</h1>
+
+<div id="seats"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbycc1RorCB29Uj5a2Ex0AcH5zMddvya1-b_sbxPtyoS0Y7BiZGcIkwW9RnFgLN7Wry13Q/exec";
+
+let selectedSeat = null;
+
+function loadSeats() {
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("seats");
+      container.innerHTML = "";
+
+      data.forEach(seat => {
+        const btn = document.createElement("button");
+        btn.classList.add("seat");
+
+        if (seat.status === "Booked") {
+          btn.classList.add("booked");
+          btn.innerHTML = seat.seat + "<br>" + seat.name;
+          btn.disabled = true;
+        } else {
+          btn.classList.add("available");
+          btn.textContent = seat.seat;
+          btn.onclick = () => bookSeat(seat.seat);
+        }
+
+        container.appendChild(btn);
+      });
+    });
+}
+
+function bookSeat(seatNumber) {
+  const name = prompt("กรอกชื่อเล่นของคุณ");
+  if (!name) return;
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      seat: seatNumber,
+      name: name
+    })
+  }).then(() => {
+    loadSeats();
+  });
+}
+
+loadSeats();
+</script>
+
+</body>
+</html>
