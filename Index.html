@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ระบบจองที่นั่งรถบัส</title>
+    <style>
+        /* ใส่ CSS ตามที่ให้ไว้ด้านบนได้เลยครับ */
+        body { font-family: sans-serif; text-align: center; }
+        .bus-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 400px; margin: auto; }
+        .seat { padding: 15px; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .available { background: #27ae60; }
+        .booked { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <h1>🚌 ระบบจองที่นั่ง</h1>
+    <div id="bus" class="bus-container">กำลังโหลด...</div>
+
+    <script>
+        // *** วาง URL ที่ได้จาก Google Apps Script (ข้อ 1) ตรงนี้ ***
+        const API_URL = "https://script.google.com/macros/s/AKfycbzheVfBMMlDAEwE9kEBe9EzxXb2RQmPONcuxjjgfevdc3nnuovGFvvAOlTWql-9PnHXpQ/exec";
+
+        async function loadSeats() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            render(data);
+        }
+
+        function render(seats) {
+            const bus = document.getElementById('bus');
+            bus.innerHTML = '';
+            seats.forEach(seat => {
+                const btn = document.createElement('button');
+                const isBooked = seat[1] === 'จองแล้ว';
+                btn.className = `seat ${isBooked ? 'booked' : 'available'}`;
+                btn.innerHTML = `${seat[0]}<br>${isBooked ? seat[2] : 'ว่าง'}`;
+                
+                btn.onclick = async () => {
+                    if (!isBooked) {
+                        const name = prompt("ชื่อเล่นของคุณ:");
+                        if (name) {
+                            await fetch(API_URL, { method: 'POST', body: JSON.stringify({action: 'reserve', id: seat[0], name: name}) });
+                            loadSeats();
+                        }
+                    } else {
+                        if (confirm("ยกเลิกการจอง? (Admin)")) {
+                            await fetch(API_URL, { method: 'POST', body: JSON.stringify({action: 'cancel', id: seat[0]}) });
+                            loadSeats();
+                        }
+                    }
+                };
+                bus.appendChild(btn);
+            });
+        }
+        loadSeats();
+    </script>
+</body>
+</html>
